@@ -9,12 +9,12 @@ search path or is listed in the ``PYTHONPATH`` environment
 variable.
 
 This file is copyright 2009 by Daniel A. Newby who grants the
-possessor a perpetual, sublicensable, royalty-free license to
-use, modify, and distribute copies (including modified copies)
-of this file provided this license grant is attached to each
-copy.  A violator may remedy breach of this license by ceasing
-further violation and reattaching this statement to all copies
-they easily can.
+possessor a perpetual, irrevocable, sublicensable, royalty-free
+license to use, modify, and distribute copies (including
+modified copies) of this file provided this license grant is
+attached to each copy.  A violator may completely remedy breach
+of this license by ceasing further violation and reattaching
+this statement to all copies they easily can.
 
 Execute this file from the command line to run some unit tests:
     > ./listalyze.py
@@ -54,10 +54,14 @@ def convert_upper_alpha( number ):
 		result += ord(ch) - ord('A') + 1
 	return result
 
+def convert_mixed_alpha( number ):
+	return convert_upper_alpha( number.upper() )
+
 scheme_converters = {
 	u'decimal'     : convert_decimal,
 	u'lower-alpha' : convert_lower_alpha,
 	u'upper-alpha' : convert_upper_alpha,
+	u'mixed-alpha' : convert_mixed_alpha,
 }
 
 
@@ -68,6 +72,9 @@ scheme_character_sets = {
 	u'lower-alpha' : set( [unicode(ch) for ch in string.ascii_lowercase] ),
 	
 	u'upper-alpha' : set( [unicode(ch) for ch in string.ascii_uppercase] ),
+	
+	u'mixed-alpha' : set( [unicode(ch) for ch in
+		(string.ascii_lowercase + string.ascii_uppercase)] ),
 }
 all_scheme_names = set( scheme_character_sets )
 
@@ -96,12 +103,11 @@ def categorize_number( number ):
 	return schemes
 
 
-def listalyze( numbers, require_dot = True ):
+def listalyze( numbers, require_dot = True, mixed_case = False ):
 	'''Figures out how to make an HTML ``<OL>`` element
     (numbered list) match a list of numbers.  The recognized
     number schemes include both proper numbers (1, 2, 3, ...)
-    as well as other ordered sequences often used for
-    enumerating lists such as letters (A, B, C, ...).
+    as well as other sequences such as alphabets (A, B, C, ...).
     
     `numbers` is an iterable producing a sequence of Unicode
     strings, such as the list ``[u'A.', u'B.', u'D.']``.  Its
@@ -115,11 +121,22 @@ def listalyze( numbers, require_dot = True ):
     lacks a trailing period.  If false, trailing periods are
     ignored if present.
     
+    `mixed_case` is a boolean that says whether to accept
+    letter-using numbering schemes without regard to case
+    differences (lowercase versus uppercase).  If true,
+    ``listalyze`` does not distinguish between case; the
+    `numbering_type` return value is given in the upper case
+    variant; the caller must manually change it to lowercase if
+    desired.  If false, ``listalyze`` distinguishes case;
+    `numbers` = [u'a.', u'B.'] would be considered an invalid
+    numbering scheme and the `numbering_type` return value
+    would be ``None``.
+    
     Returns a ``(numbering_type, value_list, default_order)``
     tuple.
     
     `numbering_type`:
-        If None, the `numbers` did not fit a supported numbering
+        If ``None``, the `numbers` did not fit a supported numbering
         scheme.  `value_list` is a list containing the elements
         from `numbers`; it may be used to render the list into a
         fallback HTML element such as a ``<TABLE>``.
@@ -222,6 +239,16 @@ def listalyze( numbers, require_dot = True ):
 		# "&" means intersection for sets.
 		number_schemes &= categorize_number( number )
 	
+	# If mixed-case support is turned off, filter out mixed case schemes.
+	if not mixed_case:
+		if u'mixed-alpha' in number_schemes:
+			number_schemes.remove( u'mixed-alpha' )
+	
+	# Don't use the mixed-alpha numbering scheme if an alternative scheme
+	# matches.
+	if (len( number_schemes ) > 1) and (u'mixed-alpha' in number_schemes):
+		number_schemes.remove( u'mixed-alpha' )
+	
 	# If/when Roman number support is added, set can have two items, and
 	# decision must be made to force it to 'alpha' or 'roman'.
 	if len( number_schemes ) != 1:
@@ -235,6 +262,11 @@ def listalyze( numbers, require_dot = True ):
 		numbers_list[i] = converter( numbers_list[i] )
 		if numbers_list[i] != i + 1:
 			default_order = False
+	
+	# Force mixed-case numbering schemes to upper case.  (It looks good
+	# and saves work for the 99.9% of callers who don't care.)
+	if scheme == u'mixed-alpha':
+		scheme = u'upper-alpha'
 	
 	return (scheme, numbers_list, default_order)
 
@@ -322,6 +354,14 @@ if __name__ == "__main__":
 	result = listalyze( [u'a.', u'1.'] )
 	if result[0] != None:
 		fail( 'improperly accepted mixed scheme numbers' )
+	
+	result = listalyze( [u'a.', u'B.'], mixed_case = False )
+	if result[0] != None:
+		fail( 'improperly accepted mixed case alphabetic numbering' )
+	
+	result = listalyze( [u'a.', u'B.'], mixed_case = True )
+	if result[0] != u'upper-alpha':
+		fail( 'improperly rejected mixed case alphabetic numbering' )
 	
 	print 'Tests successful.'
 	print 'Exiting.'
