@@ -311,6 +311,18 @@ if __name__ == "__main__":
 	if result[2] != True:
 		fail( 'failed to recognize numbers in canonical order' )
 	
+	result = listalyze( [u'1.', u'a.'] )
+	if result[0] != None:
+		fail( 'improperly accepted mixed scheme numbers' )
+	
+	result = listalyze( [u'1.', u'A.'] )
+	if result[0] != None:
+		fail( 'improperly accepted mixed scheme numbers' )
+	
+	result = listalyze( [u'a.', u'1.'] )
+	if result[0] != None:
+		fail( 'improperly accepted mixed scheme numbers' )
+	
 	print 'Tests successful.'
 	print 'Exiting.'
 	
