@@ -24,8 +24,8 @@ Maintainer:
     dn@teco-xaco.com
 '''
 
-__version__ = '1.0.0'
-__release_data__ = '2009-04-04'
+__version__ = '1.0.1'
+__release_date__ = '2009-04-05'
 
 __all__ = [
 	'listalyze',
