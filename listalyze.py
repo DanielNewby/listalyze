@@ -24,7 +24,7 @@ Maintainer:
     dn@teco-xaco.com
 '''
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __release_date__ = '2009-04-05'
 
 __all__ = [
@@ -166,8 +166,8 @@ def listalyze( numbers, require_dot = True, mixed_case = False ):
     Example usage:
         >>> from listalyze import *
         >>> listalyze( [u'A.', u'B.', u'D.'] )
-        (u'upper-alpha', [1, 2, 4], True)
-        
+        (u'upper-alpha', [1, 2, 4], False)
+    
     This example might be turned into this HTML:
         <OL STYLE="list-style-type: upper-alpha;">
             <LI VALUE="1">Item labeled "A."</LI>
